@@ -1,4 +1,5 @@
 import priorityqueue
+import re
 
 #This is a grid based implementation of the A* algorithm using a priority queue
 class PathfindingMap:
@@ -42,6 +43,13 @@ class PathfindingMap:
         predecessors = {}
         start_index = self.coordinates_to_index(start_pair[0], start_pair[1])
         end_index = self.coordinates_to_index(end_pair[0], end_pair[1])
+
+        if self.grid_map[start_index] == '0':
+            raise IndexError("Invalid start coordinate")
+
+        if(self.grid_map[end_index] == '0'):
+            raise IndexError("Invalid end coordinate")
+
         distance_map[start_index] = 0.0
         
         already_visited = set()
@@ -116,15 +124,17 @@ class PathfindingMap:
         final_path.reverse()
         return [self.index_to_coordinates(index) for index in final_path]
     
-    def print_map(self, start_pos, end_pos, path_tracked = None):
+    def print_map(self, start_pos = None, end_pos = None, path_tracked = None):
         printable_map = list(self.grid_map)
 
         if path_tracked is not None:
             for coord in path_tracked:
                 printable_map[self.coordinates_to_index(coord[0], coord[1])] = '.'
 
-        printable_map[self.coordinates_to_index(start_pos[0], start_pos[1])] = '+'
-        printable_map[self.coordinates_to_index(end_pos[0], end_pos[1])] = 'X'
+        if start_pos is not None and end_pos is not None:
+            printable_map[self.coordinates_to_index(start_pos[0], start_pos[1])] = '+'
+            printable_map[self.coordinates_to_index(end_pos[0], end_pos[1])] = 'X'
+        
         for i in range(0, self.map_width * self.map_height, self.map_width):
             print(printable_map[i:i+self.map_width])
 
@@ -132,9 +142,48 @@ class PathfindingMap:
 if __name__ == '__main__':
     nav_map_raw = "0001000" + "0001000" + "0001110" + "0111010" + "0101010" + "0101010" + "0000000"
     pf = PathfindingMap(nav_map_raw, 7, 7, False)
-    path = pf.find_path((3, 0), (1, 5))
-    print(path)
-    print("Here is the map. Your start point is shown by a + and your end point is shown by an X, and the . represents the path taken.")
-    pf.print_map((3, 0), (1, 5), path)
-    print("You can rerun this with PathfindingMap.show_details set to True to watch the algorithm work")
+    print("Here is the map. The 1s represent walkable areas and the zeroes are impassable.\n")
+    pf.print_map()
+
+    start_point_entered = False
+    end_point_entered = False
+    sx, sy = 0, 0
+    ex, ey = 0, 0
+
+    while not start_point_entered:
+        sp_str = input("Enter the starting coordinates in the format (X, Y) eg. (1, 4): ")
+        numbers = re.findall(r'\d+', sp_str)
+        if len(numbers) != 2:
+            print("Invalid number format, please try again.")
+        else:
+            sx = int(numbers[0])
+            sy = int(numbers[1])
+            start_point_entered = True
+
+    start_point = (sx, sy)
+
+    while not end_point_entered:
+        ep_str = input("Enter the ending coordinates in the format (X, Y) eg. (1, 4): ")
+        numbers = re.findall(r'\d+', ep_str)
+        if len(numbers) != 2:
+            print("Invalid number format, please try again.")
+        else:
+            ex = int(numbers[0])
+            ey = int(numbers[1])
+            end_point_entered = True
+
+    end_point = (ex, ey)
+
+    try:
+        path = pf.find_path(start_point, end_point)
+        print("Path points: " + str(path))
+        print("\n\nThis is the map with the found path. + is your starting position, X is your ending position and . is the path taken.")
+        pf.print_map(start_point, end_point, path)
+        print("\n\nYou can rerun this with PathfindingMap.show_details set to True to watch the algorithm work")
+    except IndexError as e:
+        print("\n\n")
+        print(e)
+        print("Remember that zero based indexing is being used")
+
+    
 
